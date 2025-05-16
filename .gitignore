@@ -1,0 +1,19 @@
+
+# Ignore virtual environment folder
+venv/
+
+# Python cache files
+__pycache__/
+*.py[cod]
+
+# Environment variables
+.env
+
+# Logs
+*.log
+
+# SQLite database files (if any)
+*.sqlite3
+
+# VS Code settings folder (if you use VS Code)
+.vscode/
