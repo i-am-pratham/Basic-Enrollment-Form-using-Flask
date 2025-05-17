@@ -15,8 +15,9 @@ def login():
 def register():
     return render_template("register.html", register=True)
 
-@app.route('/courses')
-def courses():
+@app.route('/courses/')
+@app.route('/courses/<term>')
+def courses(term="Spring 2024"):
     courseData = courseData = [
   { "courseID": "1111", "title": "PHP 111", "description": "Intro to PHP", "credits": "3", "term": "Fall, Spring" },
   { "courseID": "2222", "title": "Java 1", "description": "Intro to Java Programming", "credits": "3", "term": "Spring" },
@@ -25,6 +26,6 @@ def courses():
   { "courseID": "5555", "title": "Java 2", "description": "Advanced Java Programming", "credits": "4", "term": "Fall" }
 ];
     
-    return render_template("courses.html", courseData=courseData, courses=True)
+    return render_template("courses.html", courseData=courseData, courses=True, term=term)
 
 
