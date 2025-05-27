@@ -1,5 +1,8 @@
-from application import app
-from flask import render_template , request, json, Response
+
+from application import app, db 
+from flask import render_template , request, json, Response, redirect, flash
+from application.models import User, Course, Enrollment
+from application.form import LoginForm, RegisterForm
 
 courseData =[
   { "courseID": "1111", "title": "PHP 111", "description": "Intro to PHP", "credits": "3", "term": "Fall, Spring" },
@@ -16,9 +19,17 @@ courseData =[
 def index():
     return render_template("index.html", index=True)
 
-@app.route('/login')
+@app.route('/login', methods=['GET', 'POST'])
 def login():
-    return render_template("login.html", login=True)
+    form= LoginForm()
+    if form.validate_on_submit():
+        if request.form.get('email') == "test@gmail.com":
+            flash("You have successfully logged in!", "success")
+            return redirect('/index')
+        else:
+            flash("Invalid email or password. Please try again.", "danger")
+            
+    return render_template("login.html", title="Login", form=form, login=True)
 
 @app.route('/register')
 def register():
@@ -45,4 +56,13 @@ def api(idx=None):
         jdata= courseData[int(idx)]
         
     return Response(json.dumps(jdata), mimetype='application/json')
+
+
+@app.route("/user")
+def user():
+    # User(user_id=1, first_name="Harry", last_name="Potter", email="harrypotter@gmail.com", password="123456").save()
+    # User(user_id=2, first_name="Tony", last_name="Stark", email="tonystark@gmail.com", password="abc123").save()
+    users = User.objects.all()    
+    return render_template("user.html", users=users)
+     
 
