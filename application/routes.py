@@ -23,8 +23,12 @@ def index():
 def login():
     form= LoginForm()
     if form.validate_on_submit():
-        if request.form.get('email') == "test@gmail.com":
-            flash("You have successfully logged in!", "success")
+        email= form.email.data
+        password= form.password.data
+        
+        user = User.objects(email=email).first()
+        if user and user.get_password(password):        
+            flash(f"{user.first_name}, you have successfully logged in!", "success")
             return redirect('/index')
         else:
             flash("Invalid email or password. Please try again.", "danger")
