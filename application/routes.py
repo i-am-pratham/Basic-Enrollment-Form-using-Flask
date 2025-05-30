@@ -1,6 +1,6 @@
 
 from application import app, db 
-from flask import render_template , request, json, Response, redirect, flash
+from flask import render_template , request, json, Response, redirect, flash, url_for
 from application.models import User, Course, Enrollment
 from application.form import LoginForm, RegisterForm
 
@@ -27,7 +27,7 @@ def login():
         password= form.password.data
         
         user = User.objects(email=email).first()
-        if user and user.get_password(password):        
+        if user and user.check_password(password):        
             flash(f"{user.first_name}, you have successfully logged in!", "success")
             return redirect('/index')
         else:
@@ -35,14 +35,30 @@ def login():
             
     return render_template("login.html", title="Login", form=form, login=True)
 
-@app.route('/register')
+@app.route('/register', methods=['GET', 'POST'])
 def register():
-    return render_template("register.html", register=True)
+    form = RegisterForm()
+    if form.validate_on_submit():
+        user_id= User.objects.count() 
+        user_id += 1
+        email= form.email.data
+        password= form.password.data
+        first_name= form.first_name.data
+        last_name= form.last_name.data
+        user = User(user_id=user_id, email=email, first_name=first_name, last_name=last_name)
+        user.set_password(password)
+        user.save()
+        flash(f"{user.first_name}, you have successfully registered!", "success")
+        return redirect('index')
+    return render_template("register.html", title="Register", form=form, register=True)
 
 @app.route('/courses/')
 @app.route('/courses/<term>')
-def courses(term="Spring 2024"):
-    return render_template("courses.html", courseData=courseData, courses=True, term=term)
+def courses(term=None):
+    if term is None:
+        term = "Spring 2024"
+        classes=Course.objects.all()
+    return render_template("courses.html", courseData=classes, courses=True, term=term)
 
 @app.route('/enrollment', methods=['GET', 'POST'])
 def enrollment():
