@@ -6,11 +6,30 @@
     <div class="col-md-12 text-center">
         <h1>Welcome to Universal Tech Academy.</h1>
 
-        {% if login %}
+        {% if session['username'] %}
         <h3>Let's get started.</h3>
         {% else %}
-        <p>Already registered? <a href="{{url_for('login')}}">Login</a></p>
+        <p>Already registered? <a href="{{url_for('login')}}">Login</a>to access your courses.</p>
         {% endif %}
+
+        <div style="text-align: left;">
+            <h3>About Our Enrollment System</h3>
+
+            <p> At Universal Tech Academy, we provide a seamless course enrollment platform to help students register for
+                technical courses with ease. Our system allows you to browse available courses, view details such as
+                descriptions, credits, and terms offered, and enroll in the ones that match your learning goals.</p>
+
+            <p> Once enrolled, you can view your active courses and track your academic progress. Whether you're beginning
+                your journey in programming or advancing your skills in frameworks like Angular or Java, our platform
+                simplifies the process so you can focus on what matters most — learning.</p>
+
+            <p>Join us today and take the first step towards enhancing your technical skills with Universal Tech Academy.</p>
+
+            <p>Ready to begin? Register or log in to get started!</p>
+
+
+        </div>
+
     </div>
 </div>
 

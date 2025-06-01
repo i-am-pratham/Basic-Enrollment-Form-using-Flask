@@ -1,6 +1,6 @@
 
 from application import app, db 
-from flask import render_template , request, json, Response, redirect, flash, url_for
+from flask import render_template , request, json, Response, redirect, flash, url_for, session
 from application.models import User, Course, Enrollment
 from application.form import LoginForm, RegisterForm
 
@@ -21,6 +21,10 @@ def index():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    
+    if session.get('username'):
+        return redirect(url_for('index'))
+    
     form= LoginForm()
     if form.validate_on_submit():
         email= form.email.data
@@ -29,14 +33,36 @@ def login():
         user = User.objects(email=email).first()
         if user and user.check_password(password):        
             flash(f"{user.first_name}, you have successfully logged in!", "success")
+            session['user_id'] = user.user_id
+            session['username']= user.first_name 
             return redirect('/index')
         else:
             flash("Invalid email or password. Please try again.", "danger")
             
     return render_template("login.html", title="Login", form=form, login=True)
 
+@app.route('/logout')
+def logout():
+    session['user_id']=False
+    session.pop('username', None)
+    flash("You have successfully logged out!", "success")
+    return redirect(url_for('index'))
+
+@app.route('/courses/')
+@app.route('/courses/<term>')
+def courses(term=None):
+    if term is None:
+        term = "Spring 2024"
+        classes=Course.objects.all()
+    return render_template("courses.html", courseData=classes, courses=True, term=term)
+
+
 @app.route('/register', methods=['GET', 'POST'])
 def register():
+    
+    if session.get('username'):
+        return redirect(url_for('index'))
+    
     form = RegisterForm()
     if form.validate_on_submit():
         user_id= User.objects.count() 
@@ -52,20 +78,68 @@ def register():
         return redirect('index')
     return render_template("register.html", title="Register", form=form, register=True)
 
-@app.route('/courses/')
-@app.route('/courses/<term>')
-def courses(term=None):
-    if term is None:
-        term = "Spring 2024"
-        classes=Course.objects.all()
-    return render_template("courses.html", courseData=classes, courses=True, term=term)
+
 
 @app.route('/enrollment', methods=['GET', 'POST'])
 def enrollment():
-    id= request.form.get('courseID')
-    title= request.form.get('title')
-    term= request.form.get('term')
-    return render_template("enrollment.html", enrollment=True, data={"id":id, "title": title, "term": term})
+    
+    if not session.get('username'):
+        return redirect(url_for('login'))
+    
+    
+    courseID= request.form.get('courseID')
+    courseTitle= request.form.get('title')
+    user_id = session.get('user_id')
+    
+    if courseID:
+        if Enrollment.objects(user_id=user_id, courseID=courseID).first():
+            flash(f"Oops! You are already registered in this course {courseTitle}!", "danger")
+            return redirect(url_for('courses'))
+        
+        else:
+            Enrollment(user_id=user_id, courseID=courseID).save()
+            flash(f"You are enrolled in {courseTitle}!", "success")
+        
+    classes = list(User.objects.aggregate(*[
+            {
+                '$lookup': {
+                    'from': 'enrollment', 
+                    'localField': 'user_id', 
+                    'foreignField': 'user_id', 
+                    'as': 'r1'
+                }
+            }, {
+                '$unwind': {
+                    'path': '$r1', 
+                    'includeArrayIndex': 'r1_id', 
+                    'preserveNullAndEmptyArrays': False
+                }
+            }, {
+                '$lookup': {
+                    'from': 'course', 
+                    'localField': 'r1.courseID', 
+                    'foreignField': 'courseID', 
+                    'as': 'r2'
+                }
+            }, {
+                '$unwind': {
+                    'path': '$r2', 
+                    'preserveNullAndEmptyArrays': False
+                }
+            }, {
+                '$match': {
+                    'user_id': user_id
+                }
+            }, {
+                '$sort': {
+                    'courseID': 1
+                }
+            }
+]))
+      
+
+    return render_template("enrollment.html", enrollment=True, title="Enrollment", classes=classes)
+
 
 @app.route("/api/")
 @app.route("/api/<idx>")
